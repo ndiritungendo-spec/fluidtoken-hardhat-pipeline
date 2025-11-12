@@ -1,0 +1,25 @@
+module.exports = {
+  env: {
+    node: true,
+    es2022: true,
+    mocha: true,
+  },
+  extends: ['eslint:recommended'],
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
+  rules: {
+    'no-console': 'off',
+    'no-unused-vars': 'warn',
+    'quotes': ['error', 'single'],
+    'semi': ['error', 'always'],
+  },
+  ignorePatterns: [
+    'node_modules/',
+    'artifacts/',
+    'cache/',
+    'coverage/',
+    'contracts/FluidTokenFlattened.sol'
+  ]
+};
