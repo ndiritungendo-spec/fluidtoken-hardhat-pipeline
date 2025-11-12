@@ -1,0 +1,29 @@
+name: Deploy & Verify FluidToken
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx hardhat compile --force
+      - run: npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
+      - run: npx hardhat test
+      - id: deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
+        run: |
+          ADDRESS=$(npx hardhat run scripts/deploy.js --network polygon | grep "deployed to:" | awk '{print $NF}')
+          echo "DEPLOYED_ADDRESS=$ADDRESS" >> $GITHUB_OUTPUT
+      - env:
+          POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+        run: npx hardhat verify --network polygon --constructor-args arguments.js ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }} "contracts/FluidTokenFlattened.sol:FluidToken"
