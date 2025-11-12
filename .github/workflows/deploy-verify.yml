@@ -1,102 +1,170 @@
 name: Deploy & Verify FluidToken
 
+# ------------------------------------------------------------------
+# Triggers
+# ------------------------------------------------------------------
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to (default: polygon)'
+        required: false
+        default: polygon
+        type: choice
+        options: [polygon, mumbai, sepolia, mainnet]
 
+# ------------------------------------------------------------------
+# Job
+# ------------------------------------------------------------------
 jobs:
   deploy-and-verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    environment: production                     # protects secrets
+    timeout-minutes: 30
+
+    env:
+      NETWORK: ${{ inputs.network || 'polygon' }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
+      POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
 
     steps:
-      # ──────────────────────────────────────────────────────────────
+      # --------------------------------------------------------------
+      # 1. Checkout
+      # --------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Setup Node.js
+      # --------------------------------------------------------------
+      # 2. Setup Node (exact version from cache)
+      # --------------------------------------------------------------
+      - name: Setup Node.js 20.19.5
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm  # Works after package-lock.json is added
+          node-version: 20.19.5
+          cache: npm                     # caches ~/.npm
 
-      # ──────────────────────────────────────────────────────────────
+      # --------------------------------------------------------------
+      # 3. Cache node_modules (keyed by lock-file hash)
+      # --------------------------------------------------------------
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      # --------------------------------------------------------------
+      # 4. Install dependencies (strict)
+      # --------------------------------------------------------------
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Lint Solidity (solhint)
-        run: |
-          echo "=== LINTING SOLIDITY ==="
-          echo "contracts/ contents:"
-          ls -la contracts/ || echo "contracts/ missing"
-          echo "Running solhint..."
-          npx solhint "contracts/**/*.sol" --config .solhintrc.js
+      # --------------------------------------------------------------
+      # 5. Install extra dev tools (solhint, eslint)
+      # --------------------------------------------------------------
+      - name: Install solhint
+        run: npm install --save-dev solhint
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Lint JavaScript (ESLint)
-        run: |
-          echo "=== LINTING JAVASCRIPT ==="
-          echo "ESLint version:"
-          npx eslint --version
-          echo "Using config: .eslintrc.js"
-          cat .eslintrc.js
-          echo "Linting scripts/ and test/..."
-          npx eslint scripts/**/*.js test/**/*.js --config .eslintrc.js --quiet
+      - name: Install eslint
+        run: npm install --save-dev eslint
 
-      # ──────────────────────────────────────────────────────────────
+      # --------------------------------------------------------------
+      # 6. Lint Solidity
+      # --------------------------------------------------------------
+      - name: List contracts (debug)
+        run: ls -la contracts
+
+      - name: Run solhint
+        run: npx solhint 'contracts/**/*.sol'
+
+      # --------------------------------------------------------------
+      # 7. Lint JavaScript
+      # --------------------------------------------------------------
+      - name: Run eslint
+        run: npx eslint scripts/**/*.js test/**/*.js
+
+      # --------------------------------------------------------------
+      # 8. Compile
+      # --------------------------------------------------------------
       - name: Compile contracts
-        run: |
-          echo "=== COMPILING ==="
-          npx hardhat compile --force
+        run: npx hardhat compile --force
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Flatten contract
+      # --------------------------------------------------------------
+      # 9. Flatten contract (for verification)
+      # --------------------------------------------------------------
+      - name: Flatten FluidToken.sol
         run: |
-          echo "=== FLATTENING ==="
           npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
-          echo "Flattened → contracts/FluidTokenFlattened.sol"
+          echo "Flattened contract created"
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Run tests
-        run: |
-          echo "=== TESTING ==="
-          npx hardhat test
+      # --------------------------------------------------------------
+      # 10. Run tests
+      # --------------------------------------------------------------
+      - name: Run Hardhat tests
+        run: npx hardhat test
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Deploy to Polygon
+      # --------------------------------------------------------------
+      # 11. Deploy to selected network
+      # --------------------------------------------------------------
+      - name: Deploy FluidToken
         id: deploy
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
         run: |
-          echo "=== DEPLOYING TO POLYGON ==="
-          OUTPUT=$(npx hardhat run scripts/deploy.js --network polygon 2>&1)
+          echo "Deploying to $NETWORK ..."
+          OUTPUT=$(npx hardhat run scripts/deploy.js --network $NETWORK 2>&1)
           echo "$OUTPUT"
-          
           ADDRESS=$(echo "$OUTPUT" | grep -i "deployed to:" | tail -1 | awk '{print $NF}')
-          if [ -z "$ADDRESS" ]; then
-            echo "ERROR: Failed to extract deployed address!"
-            echo "Full output:"
-            echo "$OUTPUT"
+          if [[ -z "$ADDRESS" ]]; then
+            echo "ERROR: Could not extract deployed address"
             exit 1
           fi
-          
-          echo "Deployed FluidToken to: $ADDRESS"
           echo "DEPLOYED_ADDRESS=$ADDRESS" >> $GITHUB_OUTPUT
+          echo "Deployed address: $ADDRESS"
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Verify on PolygonScan
-        if: success()
+      # --------------------------------------------------------------
+      # 12. Verify on Polygonscan (or Etherscan for Ethereum nets)
+      # --------------------------------------------------------------
+      - name: Verify contract on explorer
         env:
           POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: |
-          echo "=== VERIFYING ON POLYGONSCAN ==="
-          npx hardhat verify \
-            --network polygon \
-            --constructor-args arguments.js \
-            ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }} \
-            "contracts/FluidTokenFlattened.sol:FluidToken"
+          echo "Verifying on $NETWORK ..."
+          if [[ "$NETWORK" == "polygon" || "$NETWORK" == "mumbai" ]]; then
+            npx hardhat verify --network $NETWORK \
+              --constructor-args scripts/arguments.js \
+              ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }} \
+              "contracts/FluidTokenFlattened.sol:FluidToken"
+          else
+            # Fallback for Ethereum-based networks
+            npx hardhat verify --network $NETWORK \
+              --constructor-args scripts/arguments.js \
+              ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }}
+          fi
+
+      # --------------------------------------------------------------
+      # 13. Success notification (optional)
+      # --------------------------------------------------------------
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "FluidToken deployed & verified on $NETWORK"
+          echo "Address: ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }}"
+          echo "Explorer: https://polygonscan.com/address/${{ steps.deploy.outputs.DEPLOYED_ADDRESS }}"
+
+      # --------------------------------------------------------------
+      # 14. Upload flattened source (optional artifact)
+      # --------------------------------------------------------------
+      - name: Upload flattened source
+        uses: actions/upload-artifact@v4
+        with:
+          name: FluidTokenFlattened-${{ github.sha }}
+          path: contracts/FluidTokenFlattened.sol
