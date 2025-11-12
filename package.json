@@ -1,14 +1,14 @@
 {
   "name": "fluidtoken-hardhat-pipeline",
   "version": "1.0.0",
-  "description": "Hardhat project for FluidToken with linting, testing, deploy & verify",
+  "description": "Hardhat + linting + Polygon deploy & verify",
   "scripts": {
     "test": "hardhat test",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js --network polygon",
     "verify": "hardhat verify --network polygon",
     "lint": "npm run lint:sol && npm run lint:js",
-    "lint:sol": "solhint 'contracts/**/*.sol'",
+    "lint:sol": "solhint 'contracts/**/*.sol' --config .solhintrc.js",
     "lint:js": "eslint scripts/**/*.js test/**/*.js"
   },
   "devDependencies": {
@@ -16,11 +16,7 @@
     "@nomicfoundation/hardhat-verify": "^2.0.11",
     "hardhat": "^2.26.0",
     "solhint": "^5.0.0",
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-n": "^16.6.2",
-    "eslint-plugin-promise": "^6.1.1"
+    "eslint": "^8.57.0"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2"
