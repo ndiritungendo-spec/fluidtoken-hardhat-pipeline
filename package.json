@@ -1,9 +1,10 @@
 {
   "name": "fluidtoken-hardhat-pipeline",
   "version": "1.0.0",
+  "private": true,
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "hardhat": "^2.22.10",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.27.0",
     "solhint": "^5.0.2",
     "eslint": "^8.57.0"
   },
