@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
+      - run: npm install
       - run: npx hardhat compile --force
       - run: npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
       - run: npx hardhat test
