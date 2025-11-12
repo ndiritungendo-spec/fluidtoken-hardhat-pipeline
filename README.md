@@ -7,7 +7,7 @@ The `FluidToken` is a **fair-launch ERC-20 token** with **controlled supply**, *
 
 ### Tokenomics
 
-| Allocation | % of Total | Amount (FLD) | Vesting |
+| Allocation | % of Total | Amount (FLUID) | Vesting |
 |----------|------------|--------------|-------|
 | **Total Supply** | 100% | 10,000,000 | Fixed |
 | **Sale Supply** | 40% | 4,000,000 | Sold via price oracle |
@@ -23,7 +23,7 @@ The `FluidToken` is a **fair-launch ERC-20 token** with **controlled supply**, *
 ### Core Features
 
 #### 1. **Buy with Stablecoins or Native Token**
-Users can buy FLD using:
+Users can buy FLUID using:
 - Any ERC-20 (e.g. USDT, USDC) → via Chainlink price feed
 - Native token (POL/MATIC) → via native price feed
 
