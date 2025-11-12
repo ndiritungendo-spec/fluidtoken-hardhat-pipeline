@@ -14,6 +14,10 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: npm install --save-dev solhint
+      - run: npx solhint 'contracts/**/*.sol'
+      - run: npm install --save-dev eslint
+      - run: npx eslint scripts/**/*.js test/**/*.js
       - run: npx hardhat compile --force
       - run: npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
       - run: npx hardhat test
