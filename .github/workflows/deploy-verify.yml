@@ -8,96 +8,49 @@ on:
 jobs:
   deploy-and-verify:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-      # ──────────────────────────────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      - run: npm ci --legacy-peer-deps
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Lint Solidity (solhint)
+      - name: Lint Solidity
         run: |
           echo "=== LINTING SOLIDITY ==="
-          echo "Workspace root:"
-          pwd
-          echo "contracts/ contents:"
-          ls -la contracts/ || echo "contracts/ not found"
-          echo "Running solhint..."
           npx solhint "contracts/**/*.sol" --config .solhintrc.js
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Lint JavaScript (ESLint)
-        working-directory: .  # Critical: ensures .eslintrc.js is found
+      - name: Lint JavaScript
         run: |
           echo "=== LINTING JAVASCRIPT ==="
-          echo "ESLint version:"
-          npx eslint --version
-          echo "Config file (.eslintrc.js):"
-          cat .eslintrc.js
-          echo "Linting scripts/ and test/..."
-          npx eslint scripts/**/*.js test/**/*.js --quiet
+          npx eslint scripts/**/*.js test/**/*.js --config .eslintrc.js --quiet
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Compile contracts
-        run: |
-          echo "=== COMPILING ==="
-          npx hardhat compile --force
+      - run: npx hardhat compile --force
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Flatten contract
-        run: |
-          echo "=== FLATTENING ==="
+      - run: |
           npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
-          echo "Flattened → contracts/FluidTokenFlattened.sol"
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Run tests
-        run: |
-          echo "=== TESTING ==="
-          npx hardhat test
+      - run: npx hardhat test
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Deploy to Polygon
+      - name: Deploy
         id: deploy
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
         run: |
-          echo "=== DEPLOYING TO POLYGON ==="
-          OUTPUT=$(npx hardhat run scripts/deploy.js --network polygon 2>&1)
+          OUTPUT=$(npx hardhat run scripts/deploy.js --network polygon)
           echo "$OUTPUT"
-          
           ADDRESS=$(echo "$OUTPUT" | grep -i "deployed to:" | tail -1 | awk '{print $NF}')
-          if [ -z "$ADDRESS" ]; then
-            echo "ERROR: Failed to extract deployed address!"
-            echo "Full output:"
-            echo "$OUTPUT"
-            exit 1
-          fi
-          
-          echo "Deployed FluidToken to: $ADDRESS"
           echo "DEPLOYED_ADDRESS=$ADDRESS" >> $GITHUB_OUTPUT
 
-      # ──────────────────────────────────────────────────────────────
-      - name: Verify on PolygonScan
+      - name: Verify
         if: success()
         env:
           POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
         run: |
-          echo "=== VERIFYING ON POLYGONSCAN ==="
           npx hardhat verify \
             --network polygon \
             --constructor-args arguments.js \
