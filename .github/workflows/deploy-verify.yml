@@ -15,8 +15,7 @@ jobs:
           node-version: 20
       - run: npm install --legacy-peer-deps
       - run: npm install --save-dev solhint
-      - run: ls -la contracts  # Debug: List files in contracts/
-      - run: npx solhint 'contracts/**/*.sol' || true  # Run lint, ignore failure for debug
+      - run: npx solhint 'contracts/**/*.sol'
       - run: npm install --save-dev eslint
       - run: npx eslint scripts/**/*.js test/**/*.js
       - run: npx hardhat compile --force
