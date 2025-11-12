@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: npm  # Works after package-lock.json is added
 
       # ──────────────────────────────────────────────────────────────
       - name: Install dependencies
@@ -31,24 +31,21 @@ jobs:
       - name: Lint Solidity (solhint)
         run: |
           echo "=== LINTING SOLIDITY ==="
-          echo "Workspace root:"
-          pwd
           echo "contracts/ contents:"
-          ls -la contracts/ || echo "contracts/ not found"
+          ls -la contracts/ || echo "contracts/ missing"
           echo "Running solhint..."
           npx solhint "contracts/**/*.sol" --config .solhintrc.js
 
       # ──────────────────────────────────────────────────────────────
       - name: Lint JavaScript (ESLint)
-        working-directory: .  # Critical: ensures .eslintrc.js is found
         run: |
           echo "=== LINTING JAVASCRIPT ==="
           echo "ESLint version:"
           npx eslint --version
-          echo "Config file (.eslintrc.js):"
+          echo "Using config: .eslintrc.js"
           cat .eslintrc.js
           echo "Linting scripts/ and test/..."
-          npx eslint scripts/**/*.js test/**/*.js --quiet
+          npx eslint scripts/**/*.js test/**/*.js --config .eslintrc.js --quiet
 
       # ──────────────────────────────────────────────────────────────
       - name: Compile contracts
