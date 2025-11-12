@@ -1,20 +1,10 @@
 {
   "name": "fluidtoken-hardhat-pipeline",
   "version": "1.0.0",
-  "scripts": {
-    "test": "hardhat test",
-    "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js --network polygon",
-    "verify": "hardhat verify --network polygon",
-    "lint": "npm run lint:sol && npm run lint:js",
-    "lint:sol": "solhint 'contracts/**/*.sol' --config .solhintrc.js",
-    "lint:js": "eslint scripts/**/*.js test/**/*.js --config .eslintrc.js"
-  },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.11",
-    "hardhat": "^2.26.0",
-    "solhint": "^5.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.10",
+    "solhint": "^5.0.2",
     "eslint": "^8.57.0"
   },
   "dependencies": {
