@@ -1,7 +1,12 @@
+cat > package.json << 'EOF'
 {
   "name": "fluidtoken-hardhat-pipeline",
   "version": "1.0.0",
-  "private": true,
+  "description": "Hardhat project for FluidToken",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.27.0",
@@ -12,3 +17,4 @@
     "@openzeppelin/contracts": "^5.0.2"
   }
 }
+EOF
