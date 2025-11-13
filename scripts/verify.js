@@ -1,41 +1,23 @@
-const hre = require("hardhat");
+const { run } = require("hardhat");  // Hardhat 3 style for tasks
 require("dotenv").config();
 
 async function main() {
-  const network = hre.network.name;
+  const network = require("hardhat").network.name;  // Hardhat 3 access
   console.log(`🔍 Verifying on ${network.toUpperCase()} PolygonScan...`);
 
-  // UPDATE THIS with deployed address from deploy.js
-  const contractAddress = "0xYourDeployedContractAddressHere";
+  const contractAddress = "0xYourDeployedContractAddressHere";  // UPDATE!
 
   if (contractAddress === "0xYourDeployedContractAddressHere") {
     throw new Error("Update contractAddress in script!");
   }
 
-  // Load args from .env (MUST match deploy)
-  const foundationWallet = process.env.FOUNDATION_WALLET;
-  const relayerWallet = process.env.RELAYER_WALLET;
-  const signersStr = (process.env.SIGNERS || "").split(',').map(s => s.trim()).filter(Boolean);
-  const requiredApprovals = parseInt(process.env.REQUIRED_APPROVALS || "2");
-  const marketingWallet = process.env.MARKETING_WALLET;
-  const teamWallet = process.env.TEAM_WALLET;
-  const devWallet = process.env.DEV_WALLET;
+  const args = require("./arguments.js");
 
-  const constructorArgs = [
-    foundationWallet,
-    relayerWallet,
-    signersStr,
-    requiredApprovals,
-    marketingWallet,
-    teamWallet,
-    devWallet
-  ];
+  console.log("Constructor args:", args);
 
-  console.log("Constructor args:", constructorArgs);
-
-  await hre.run("verify:verify", {
+  await run("verify:verify", {
     address: contractAddress,
-    constructorArguments: constructorArgs,
+    constructorArguments: args,
   });
 
   const scanUrl = network === 'polygon' ? `https://polygonscan.com/address/${contractAddress}` : `https://mumbai.polygonscan.com/address/${contractAddress}`;
