@@ -1,17 +1,33 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
 describe("FluidToken", function () {
-  it("Deploys with correct symbol", async function () {
+  let token, owner, addr1;
+
+  beforeEach(async function () {
+    [owner, addr1] = await ethers.getSigners();
+    const signers = [owner.address, addr1.address];
     const FluidToken = await ethers.getContractFactory("FluidToken");
-    const token = await FluidToken.deploy(
-      "0x51b88d94a23e91770b2ccc1d24ac6804551e1262",
-      "0x96f3d6c8e43518f1f62ff530ebf8ef8faf5b8063",
-      ["0x51b88d94a23e91770b2ccc1d24ac6804551122", "0x228978289a5864be1890dac00154a7d343273342"],
-      2,
-      "0xD40C17e2076A6CaB4fCb4C7ad50693c0bd87c96F",
-      "0x22A978289a5864be1890DAC00154A7d343273342",
-      "0x4cA465F7B25b630B62b4C36b64Dff963f81E27C0"
+    token = await FluidToken.deploy(
+      owner.address,  // foundation
+      owner.address,  // relayer
+      signers,
+      1,  // approvals
+      owner.address,  // marketing
+      owner.address,  // team
+      owner.address   // dev
     );
-    expect(await token.symbol()).to.equal("FLUID");
+    await token.waitForDeployment();
+  });
+
+  it("Should mint total supply and transfer allocations", async function () {
+    const totalSupply = await token.TOTAL_SUPPLY();
+    expect(await token.totalSupply()).to.equal(totalSupply);
+    expect(await token.balanceOf(owner.address)).to.equal(totalSupply);  // Initial mint to contract, then transfers
+  });
+
+  it("Should allow owner to pause sales", async function () {
+    await expect(token.pauseSales()).to.emit(token, "SalesPaused").withArgs(true);
+    expect(await token.salesPaused()).to.be.true;
   });
 });
