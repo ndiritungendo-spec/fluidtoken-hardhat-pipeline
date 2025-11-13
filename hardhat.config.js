@@ -5,7 +5,7 @@ require("dotenv").config();
 
 module.exports = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.26",  // Latest stable (compatible with OZ 5.4.0)
     settings: {
       optimizer: {
         enabled: true,
