@@ -9,27 +9,40 @@
     "deploy:mumbai": "hardhat run scripts/deploy.js --network mumbai",
     "deploy:polygon": "hardhat run scripts/deploy.js --network polygon",
     "verify:mumbai": "hardhat run scripts/verify.js --network mumbai",
-    "verify:polygon": "hardhat run scripts/verify.js --network polygon"
+    "verify:polygon": "hardhat run scripts/verify.js --network polygon",
+    "install:legacy": "npm install --legacy-peer-deps"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
-    "@nomicfoundation/hardhat-ethers": "^3.0.0",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.0",
-    "@typechain/ethers-v6": "^0.4.0",
-    "@typechain/hardhat": "^9.0.0",
-    "@types/chai": "^4.2.0",
-    "@types/mocha": ">=9.1.0",
-    "chai": "^4.2.0",
-    "ethers": "^6.4.0",
-    "hardhat": "^2.22.0",
-    "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.8.1",
-    "typechain": "^8.3.0"
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "@nomicfoundation/hardhat-ethers": "^3.1.1",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.1",
+    "@nomicfoundation/hardhat-verify": "^2.1.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.0.1",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.9",
+    "chai": "^4.5.0",
+    "ethers": "^6.13.4",
+    "hardhat": "^2.22.17",
+    "hardhat-gas-reporter": "^2.2.1",
+    "solidity-coverage": "^0.8.13",
+    "typechain": "^8.6.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.2",
-    "dotenv": "^16.4.5"
+    "@openzeppelin/contracts": "^5.0.3",
+    "dotenv": "^16.4.7"
+  },
+  "overrides": {
+    "ethers": "$ethers",
+    "@nomicfoundation/hardhat-ethers": {
+      "ethers": "$ethers"
+    },
+    "@nomicfoundation/hardhat-toolbox": {
+      "ethers": "$ethers"
+    },
+    "@nomicfoundation/hardhat-verify": {
+      "ethers": "$ethers"
+    }
   }
 }
