@@ -9,8 +9,7 @@
     "deploy:mumbai": "hardhat run scripts/deploy.js --network mumbai",
     "deploy:polygon": "hardhat run scripts/deploy.js --network polygon",
     "verify:mumbai": "hardhat run scripts/verify.js --network mumbai",
-    "verify:polygon": "hardhat run scripts/verify.js --network polygon",
-    "install:legacy": "npm install --legacy-peer-deps"
+    "verify:polygon": "hardhat run scripts/verify.js --network polygon"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
@@ -35,14 +34,9 @@
   },
   "overrides": {
     "ethers": "$ethers",
-    "@nomicfoundation/hardhat-ethers": {
-      "ethers": "$ethers"
-    },
-    "@nomicfoundation/hardhat-toolbox": {
-      "ethers": "$ethers"
-    },
-    "@nomicfoundation/hardhat-verify": {
-      "ethers": "$ethers"
-    }
+    "@nomicfoundation/hardhat-ethers": { "ethers": "$ethers" },
+    "@nomicfoundation/hardhat-toolbox": { "ethers": "$ethers" },
+    "@nomicfoundation/hardhat-verify": { "ethers": "$ethers" },
+    "typechain": "^8.3.2"
   }
 }
