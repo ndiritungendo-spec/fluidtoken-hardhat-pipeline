@@ -1,90 +1,44 @@
-name: Deploy & Verify FluidToken
+name: Deploy & Verify Polygon Mainnet
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    tags: ['v*']  # e.g., git tag v1.0 && git push --tags
 
 jobs:
-  deploy-and-verify:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    env:
-      NETWORK: polygon
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'  # Enables caching once lock file exists
+          node-version: '20'
+          cache: 'npm'
 
-      # AUTO-FIX: Generate lock file if missing
-      - name: Auto-generate package-lock.json (if missing)
-        run: |
-          if [ ! -f package-lock.json ]; then
-            echo "::warning::Lock file missing – generating for reproducibility..."
-            npm install --package-lock-only
-            echo "✅ Generated package-lock.json – commit this to repo for future runs!"
-          else
-            echo "✅ Lock file found"
-          fi
+      - name: Install Deps
+        run: npm ci
 
-      - name: Install dependencies
-        run: npm ci  # Strict install – fast with cache, fails if drift
+      - name: Compile
+        run: npx hardhat compile
 
-      - name: Install dev tools
-        run: npm install --save-dev solhint eslint
-
-      - name: Lint & List
-        run: |
-          ls -la contracts/
-          npx solhint 'contracts/**/*.sol'
-          npx eslint scripts/**/*.js test/**/*.js || true  # Ignore lint fails for now
-
-      - name: Compile & Flatten
-        run: |
-          npx hardhat compile --force
-          npx hardhat flatten contracts/FluidToken.sol > contracts/FluidTokenFlattened.sol
-
-      - name: Test
-        run: npx hardhat test
-
-      - name: Deploy
-        id: deploy
+      - name: Deploy to Polygon
         env:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
-        run: |
-          echo "Deploying to $NETWORK..."
-          OUTPUT=$(npx hardhat run scripts/deploy.js --network $NETWORK 2>&1)
-          echo "$OUTPUT"
-          ADDRESS=$(echo "$OUTPUT" | grep -i "deployed to:" | tail -1 | awk '{print $NF}')
-          if [[ -z "$ADDRESS" ]]; then
-            echo "❌ No address extracted"
-            exit 1
-          fi
-          echo "DEPLOYED_ADDRESS=$ADDRESS" >> $GITHUB_OUTPUT
-          echo "✅ Deployed: $ADDRESS"
+          FOUNDATION_WALLET: ${{ secrets.FOUNDATION_WALLET }}
+          RELAYER_WALLET: ${{ secrets.RELAYER_WALLET }}
+          MARKETING_WALLET: ${{ secrets.MARKETING_WALLET }}
+          TEAM_WALLET: ${{ secrets.TEAM_WALLET }}
+          DEV_WALLET: ${{ secrets.DEV_WALLET }}
+          SIGNERS: ${{ secrets.SIGNERS }}
+          REQUIRED_APPROVALS: ${{ secrets.REQUIRED_APPROVALS }}
+        run: npx hardhat run scripts/deploy.js --network polygon
 
-      - name: Verify
-        if: success()
+      - name: Verify (wait 2min)
         env:
-          POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: |
-          npx hardhat verify --network $NETWORK \
-            --constructor-args scripts/arguments.js \
-            ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }} \
-            "contracts/FluidTokenFlattened.sol:FluidToken"
-
-      - name: Summary
+          sleep 120
+          npx hardhat run scripts/verify.js --network polygon
         if: success()
-        run: |
-          echo "🎉 Success! Address: ${{ steps.deploy.outputs.DEPLOYED_ADDRESS }}"
-          echo "Explorer: https://polygonscan.com/address/${{ steps.deploy.outputs.DEPLOYED_ADDRESS }}"
