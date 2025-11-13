@@ -1,12 +1,11 @@
-const { ethers, network } = require("hardhat");  // Add network for logging
+const { ethers, network } = require("hardhat");
 
 async function main() {
   console.log(`\n🚀 Deploying to ${network.name.toUpperCase()}...`);
 
   const FluidToken = await ethers.getContractFactory("FluidToken");
-  const args = require("../arguments.js");
+  const args = require("./arguments.js");  // Relative path
 
-  // Optional: Polygon gas boost
   const deployOverrides = network.name === "polygon" ? { gasPrice: 30000000000n } : {};
 
   const token = await FluidToken.deploy(...args, deployOverrides);
