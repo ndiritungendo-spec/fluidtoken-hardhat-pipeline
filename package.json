@@ -27,7 +27,7 @@
     "hardhat": "^2.22.17",
     "hardhat-gas-reporter": "^2.2.1",
     "solidity-coverage": "^0.8.13",
-    "typechain": "^8.6.1"
+    "typechain": "^8.3.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.3",
